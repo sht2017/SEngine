@@ -22,7 +22,7 @@ public class EntryPoint {
 
         if (result != null && !result.isEmpty()) {
             IO file = new IO(result + ".ppm");
-            BufferedImage image = PPMParser.parse(file.readBytes());
+            BufferedImage image = new PPMParser(file.readBytes()).getBufferedImage();
             EventQueue.invokeLater(new Runnable() {
                 @Override
                 public void run() {

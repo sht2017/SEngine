@@ -155,7 +155,7 @@ public class GUI extends JFrame {
         new IO(
                 JOptionPane.showInputDialog(this, "Please enter the filename you wanna use (without suffix):") + ".ppm",
                 true
-        ).writeBytes(PPMParser.compose(mixedBuffer));
+        ).writeBytes(new PPMParser(mixedBuffer).getRaw());
     }
 
     private class MouseEvents implements MouseListener {

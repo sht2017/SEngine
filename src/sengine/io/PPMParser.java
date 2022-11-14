@@ -7,25 +7,43 @@ import java.awt.image.WritableRaster;
 import java.util.IllegalFormatFlagsException;
 
 public class PPMParser {
+    private byte[] raw;
+    private BufferedImage bufferedImage;
     private static final byte[] MAGIC_NUM_HEADER = {80, 54};
     private static final byte SPACE = 32;
     private static final byte LINE_BREAKER = 10;
+    public PPMParser(byte[] rawFile){
+        this.raw=rawFile;
+        this.bufferedImage=parse(rawFile);
+    }
+    public PPMParser(BufferedImage bufferedImage){
+        this.bufferedImage=bufferedImage;
+        this.raw=compose(bufferedImage);
+    }
 
-    public static BufferedImage parse(byte[] rawFile) {
+    public BufferedImage getBufferedImage() {
+        return bufferedImage;
+    }
+
+    public byte[] getRaw() {
+        return raw;
+    }
+
+    private BufferedImage parse(byte[] raw) {
         int width = 0;
         int height = 0;
         String tmpWidth = "";
         String tmpHeight = "";
         int i = 0;
         for (; i < 2; i++) {
-            if (rawFile[i] != MAGIC_NUM_HEADER[i]) {
+            if (raw[i] != MAGIC_NUM_HEADER[i]) {
                 throw new IllegalFormatFlagsException("HEADER");
             }
         }
         int delimiterCounter = 0;
         HEADER:
-        for (; i < rawFile.length; i++) {
-            if (rawFile[i] == SPACE || rawFile[i] == LINE_BREAKER) {
+        for (; i < raw.length; i++) {
+            if (raw[i] == SPACE || raw[i] == LINE_BREAKER) {
                 delimiterCounter++;
             }
             switch (delimiterCounter) {
@@ -33,10 +51,10 @@ public class PPMParser {
                 case 3:
                     break;
                 case 1:
-                    tmpWidth += (char) Byte.toUnsignedInt(rawFile[i]);
+                    tmpWidth += (char) Byte.toUnsignedInt(raw[i]);
                     break;
                 case 2:
-                    tmpHeight += (char) Byte.toUnsignedInt(rawFile[i]);
+                    tmpHeight += (char) Byte.toUnsignedInt(raw[i]);
                     break;
                 default:
                     i++;
@@ -53,18 +71,18 @@ public class PPMParser {
         height = Integer.parseInt(tmpHeight.substring(1));
         int[] data = new int[width * height];
         int dataStart = i;
-        for (; i < rawFile.length; i++) {
+        for (; i < raw.length; i++) {
             final int offset = i - dataStart;
             switch (offset % 3) {
                 case 0:
                     data[offset / 3] |= 0xFF000000;
-                    data[offset / 3] |= Byte.toUnsignedInt(rawFile[i]) << 16;
+                    data[offset / 3] |= Byte.toUnsignedInt(raw[i]) << 16;
                     break;
                 case 1:
-                    data[offset / 3] |= Byte.toUnsignedInt(rawFile[i]) << 8;
+                    data[offset / 3] |= Byte.toUnsignedInt(raw[i]) << 8;
                     break;
                 case 2:
-                    data[offset / 3] |= Byte.toUnsignedInt(rawFile[i]) << 0;
+                    data[offset / 3] |= Byte.toUnsignedInt(raw[i]) << 0;
                     break;
             }
         }
@@ -76,13 +94,13 @@ public class PPMParser {
         return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), null);
     }
 
-    public static byte[] compose(BufferedImage imageBuffer) {
-        DataBufferInt buffer = (DataBufferInt) imageBuffer.getRaster().getDataBuffer();
+    private byte[] compose(BufferedImage bufferedImage) {
+        DataBufferInt buffer = (DataBufferInt) bufferedImage.getRaster().getDataBuffer();
         int[] data = buffer.getData();
-        String widthStr = "" + imageBuffer.getWidth();
-        String heightStr = "" + imageBuffer.getHeight();
+        String widthStr = "" + bufferedImage.getWidth();
+        String heightStr = "" + bufferedImage.getHeight();
         int headerLength = ("P6 " + widthStr + " " + heightStr + " " + "255 ").length();
-        byte[] rawData = new byte[headerLength + imageBuffer.getWidth() * imageBuffer.getHeight() * 3];
+        byte[] rawData = new byte[headerLength + bufferedImage.getWidth() * bufferedImage.getHeight() * 3];
         int i = 0;
         for (; i < MAGIC_NUM_HEADER.length; i++) {
             rawData[i] = MAGIC_NUM_HEADER[i];
