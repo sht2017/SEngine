@@ -1,2 +1,5 @@
-package sengine.math;public class Vector {
+package sengine.math;
+
+public class Vector {
+
 }

@@ -1,30 +1,45 @@
 package sengine.io;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Scanner;
+public class CSVParser extends FileHandler {
 
-public class FileHandler extends IO{
-
-    public FileHandler(String path) {
+    public CSVParser(String path) {
         super(path);
     }
 
-    public String read(String parameter) {
-        Scanner reader = read();
-        String result = "";
-        while (reader.hasNext()) {
-            result += reader.nextLine() + String.format("%n");
+    public static void main(String[] args) {
+        CSVParser file = new CSVParser("test.txt");
+        System.out.println(file.read(""));
+    }
+
+    public String[] parseString() {
+        return read("").split(",");
+    }
+
+    public int[] parseInt() {
+        String[] origin = read("").split(",");
+        int[] result = new int[origin.length];
+        for (int i = 0; i < origin.length; i++) {
+            result[i] = Integer.parseInt(origin[i]);
         }
         return result;
     }
-    public String[] parse(String delimiter){
-        return read("").split(delimiter);
+
+    public float[] parseFloat() {
+        String[] origin = read("").split(",");
+        float[] result = new float[origin.length];
+        for (int i = 0; i < origin.length; i++) {
+            result[i] = Float.parseFloat(origin[i]);
+        }
+        return result;
     }
-    public static void main(String[] args){
-        FileHandler file=new FileHandler("test.txt");
-        System.out.println(file.read(""));
+
+    public double[] parseDouble() {
+        String[] origin = read("").split(",");
+        double[] result = new double[origin.length];
+        for (int i = 0; i < origin.length; i++) {
+            result[i] = Double.parseDouble(origin[i]);
+        }
+        return result;
     }
 
 }

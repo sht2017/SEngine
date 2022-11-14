@@ -1,6 +1,6 @@
 package sengine.math.exceptions;
 
-public class MatrixSizeException extends IllegalArgumentException{
+public class MatrixSizeException extends IllegalArgumentException {
     public MatrixSizeException() {
         super();
     }
