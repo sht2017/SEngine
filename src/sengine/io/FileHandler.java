@@ -10,11 +10,11 @@ public class FileHandler extends IO {
 
     public String read(String parameter) {
         Scanner reader = read();
-        String result = "";
+        StringBuilder result = new StringBuilder();
         while (reader.hasNext()) {
-            result += reader.nextLine() + String.format("%n");
+            result.append(reader.nextLine()).append(String.format("%n"));
         }
-        return result;
+        return result.toString();
     }
 
     public String[] parse(String delimiter) {

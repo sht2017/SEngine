@@ -27,3 +27,11 @@ hs_err_pid*
 
 # output folder
 out
+
+# backup file
+*.bak
+*.back
+# test file
+Test.*
+test.*
+*.test

@@ -1,240 +1,208 @@
-import sengine.io.IO;
-import sengine.io.PPMParser;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 
 public class GUI extends JFrame {
-    //    private Image img;
-//    public GUI(Image img){
-//        super("ImageBufferRenderer");
-//        this.img=img;
-//        setSize(img.getWidth(),img.getHeight()+23);
-//        setResizable(false);
-//        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//    }
-//    public GUI(String title,Image img){
-//        super(title);
-//        this.img=img;
-//        setSize(img.getWidth(),img.getHeight()+23);
-//        setResizable(false);
-//        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//    }
-    private final BufferedImage buffer;
-    Font font1 = new Font("TimesRoman", Font.BOLD, 26);
-    Font font2 = new Font("TimesRoman", Font.PLAIN, 16);
+    private final BufferedImage frameBuffer;
+    private final BufferedImage widgetBuffer;
+    private final BufferedImage widgetOverlay;
+    private final BufferedImage mixedBuffer;
     int orgX = 0;
     int orgY = 0;
-    Color color = Color.BLACK;
-    private BufferedImage canvasBuffer;
-    private BufferedImage overlayBuffer;
-    private BufferedImage widgetBuffer;
-    private BufferedImage mixedBuffer;
+    boolean menu0status = false;
+    boolean menu1status = false;
+    int menu0Selected = -1;
+    int menu1Selected = -1;
 
-    public GUI(BufferedImage buffer) {
-        super("ImageBufferRenderer");
-        this.buffer = buffer;
-        this.canvasBuffer = new BufferedImage(buffer.getWidth(), buffer.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        this.overlayBuffer = new BufferedImage(buffer.getWidth(), buffer.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        this.widgetBuffer = new BufferedImage(buffer.getWidth(), buffer.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        this.mixedBuffer = new BufferedImage(buffer.getWidth(), buffer.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        setSize(buffer.getWidth(), buffer.getHeight() + 23);
+    public GUI() {
+        super("BufferRenderer");
+        this.frameBuffer = new BufferedImage(1024, 768, BufferedImage.TYPE_INT_ARGB);
+        this.widgetBuffer = new BufferedImage(1024, 768, BufferedImage.TYPE_INT_ARGB);
+        this.widgetOverlay = new BufferedImage(1024, 768, BufferedImage.TYPE_INT_ARGB);
+        this.mixedBuffer = new BufferedImage(1024, 768, BufferedImage.TYPE_INT_ARGB);
+        getContentPane().setPreferredSize(new Dimension(1024, 768));
+        //setPreferredSize(new Dimension(1024, 768));
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         addMouseListener(new MouseEvents());
         addMouseMotionListener(new MouseMotionEvents());
-    }
-
-    public GUI(String title, BufferedImage buffer) {
-        super(title);
-        this.buffer = buffer;
-        setSize(buffer.getWidth(), buffer.getHeight() + 23);
-        setResizable(false);
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        pack();
     }
 
     @Override
     public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         Graphics2D g2do = widgetBuffer.createGraphics();
+        g2do.setColor(Color.decode("#F2F2F2"));
+        g2do.fillRect(0, 0, getWidth(), 30);
+        g2do.setColor(Color.decode("#C9C9C9"));
+        g2do.drawLine(0, 28, getWidth(), 28);
         g2do.setColor(Color.BLACK);
-        g2do.fillRect(0, 0, getWidth(), 50);
-        g2do.setColor(Color.WHITE);
-        g2do.fillRect(4, 4, getWidth() - 24, 42);
-        g2do.setColor(Color.BLACK);
-        g2do.fillRect(getWidth() / 2 - 2, 8, 34, 34);
-        g2do.fillRect(getWidth() / 2 + 38, 8, 34, 34);
-        g2do.fillRect(getWidth() / 2 + 78, 8, 34, 34);
-        g2do.fillRect(getWidth() / 2 + 118, 8, 34, 34);
-        g2do.fillRect(getWidth() / 2 + 158, 8, 34, 34);
-        g2do.fillRect(getWidth() / 2 + 328, 8, 34, 34);
-        g2do.setColor(Color.RED);
-        g2do.fillRect(getWidth() / 2 + 1, 11, 28, 28);
-        g2do.setColor(Color.GREEN);
-        g2do.fillRect(getWidth() / 2 + 41, 11, 28, 28);
-        g2do.setColor(Color.BLUE);
-        g2do.fillRect(getWidth() / 2 + 81, 11, 28, 28);
-        g2do.setColor(Color.BLACK);
-        g2do.fillRect(getWidth() / 2 + 121, 11, 28, 28);
-        g2do.fillRect(0, 0, 100, 50);
-        g2do.fillRect(96, 0, 100, 50);
-        g2do.setColor(Color.WHITE);
-        g2do.fillRect(getWidth() / 2 + 161, 11, 28, 28);
-        g2do.fillRect(4, 4, 92, 42);
-        g2do.fillRect(100, 4, 92, 42);
-        g2do.setColor(color);
-        g2do.fillRect(getWidth() / 2 + 331, 11, 28, 28);
-        g2do.setColor(Color.BLACK);
-        g2do.setFont(font1);
-        g2do.drawString("Save", 18, 33);
-        g2do.drawString("CLR", 116, 33);
-        g2do.setFont(font2);
-        g2do.drawString("Selected Color:", getWidth() / 2 + 220, 30);
+        //g2do.fillRect(0,0,36,30);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        g2do.drawString("File(s)", 10, 19);
+        g2do.drawString("Settings", 62, 19);
 
-
+        Graphics2D gf = frameBuffer.createGraphics();
+        gf.setColor(Color.black);
+        gf.fillRect(0, 0, getWidth(), getHeight());
         Graphics2D gc = mixedBuffer.createGraphics();
-        gc.drawImage(buffer, 0, 0, null);
-        gc.drawImage(canvasBuffer, 0, 0, null);
-        gc.drawImage(overlayBuffer, 0, 0, null);
+        gc.drawImage(frameBuffer, 0, 0, null);
         gc.drawImage(widgetBuffer, 0, 0, null);
 
+        gc.drawImage(widgetOverlay, 0, 0, null);
+
         g2d.drawImage(mixedBuffer, 8, 31, null);
-
-
-//        int[][][] rawImg=img.getData();
-//        for (int h=0;h<rawImg[0].length;h++){
-
-//            for (int w=0;w<rawImg.length;w++){
-//                g2d.setColor(new Color(rawImg[w][h][0],rawImg[w][h][1],rawImg[w][h][2]));
-//                //g2d.drawRect(w,h+23,1,1);
-//                g2d.drawLine(w,h+23,w,h+23);
-//            }
-//        }
     }
 
-    public void drawCanvas(int x, int y, int x1, int y1) {
-        //Graphics2D g2d = (Graphics2D) getGraphics();
-        Graphics2D g2d = canvasBuffer.createGraphics();
-        //Ellipse2D.Double circle = new Ellipse2D.Double(x, y, 10, 10);
-        //g2d.fill(circle);
-        g2d.setColor(color);
-        g2d.setStroke(new BasicStroke(5));
-        g2d.drawLine(x, y, x1, y1);
+    private void updateSelect(int x, int y, int width, int height, Color color) {
+        Graphics2D g2do = widgetOverlay.createGraphics();
+        g2do.setColor(color);
+        g2do.fillRect(x, y, width, height);
+        g2do.setColor(Color.black);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        g2do.drawString("File(s)", 10, 19);
+        g2do.drawString("Settings", 62, 19);
         repaint();
     }
 
-    public void clearCanvas() {
-        Graphics2D g2d = canvasBuffer.createGraphics();
+    private void drawMenu0() {
+        menu0status = true;
+        updateSelect(0, 0, 53, 28, Color.decode("#1A7DC4"));
+        Graphics2D g2do = widgetOverlay.createGraphics();
+        g2do.setColor(Color.white);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        g2do.drawString("File(s)", 10, 19);
+        g2do.setColor(Color.black);
+        g2do.drawString("Settings", 62, 19);
+        g2do.setColor(Color.decode("#C9C9C9"));
+        g2do.fillRect(0, 28, 142, 110);
+        g2do.setColor(Color.decode("#F2F2F2"));
+        g2do.fillRect(1, 29, 140, 108);
+        g2do.setColor(Color.decode("#C9C9C9"));
+        g2do.drawLine(0, 50, 141, 50);
+        g2do.drawLine(0, 72, 141, 72);
+        g2do.drawLine(0, 94, 141, 94);
+        g2do.drawLine(0, 116, 141, 116);
+        g2do.drawLine(0, 138, 141, 138);
+        g2do.setColor(Color.black);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        g2do.drawString("Open Scene", 10, 44);
+        g2do.drawString("Open Model", 10, 66);
+        g2do.drawString("Save Scene", 10, 88);
+        g2do.drawString("Save Model", 10, 110);
+        g2do.drawString("Exit", 10, 132);
+        repaint();
+    }
+
+    private void drawMenu1() {
+        menu1status = true;
+        updateSelect(53, 0, 68, 28, Color.decode("#1A7DC4"));
+        Graphics2D g2do = widgetOverlay.createGraphics();
+        g2do.setColor(Color.black);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        g2do.drawString("File(s)", 10, 19);
+        g2do.setColor(Color.white);
+        g2do.drawString("Settings", 62, 19);
+        g2do.setColor(Color.decode("#C9C9C9"));
+        g2do.fillRect(53, 28, 142, 22);
+        g2do.setColor(Color.decode("#F2F2F2"));
+        g2do.fillRect(54, 29, 140, 20);
+        g2do.setColor(Color.decode("#C9C9C9"));
+        g2do.drawLine(53, 50, 194, 50);
+        g2do.setColor(Color.black);
+        g2do.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        g2do.drawString("Open Setting Menu", 63, 44);
+        repaint();
+    }
+
+    public void clearWidgetOverlay() {
+        Graphics2D g2d = widgetOverlay.createGraphics();
         g2d.setComposite(AlphaComposite.Clear);
-        g2d.fillRect(0, 0, overlayBuffer.getWidth(), overlayBuffer.getHeight());
+        g2d.fillRect(0, 0, widgetOverlay.getWidth(), widgetOverlay.getHeight());
         g2d.setComposite(AlphaComposite.SrcOver);
         repaint();
-    }
-
-    private void drawOverlay(int x, int y) {
-        //Graphics2D g2d = (Graphics2D) getGraphics();
-        Graphics2D g2d = overlayBuffer.createGraphics();
-        g2d.setComposite(AlphaComposite.Clear);
-        g2d.fillRect(0, 0, overlayBuffer.getWidth(), overlayBuffer.getHeight());
-        g2d.setComposite(AlphaComposite.SrcOver);
-        g2d.setColor(color);
-        Ellipse2D.Double circle = new Ellipse2D.Double(x - 5, y - 5, 10, 10);
-        g2d.fill(circle);
-        repaint();
-    }
-
-    private void saveImage() {
-        Graphics2D g2d = mixedBuffer.createGraphics();
-        g2d.drawImage(buffer, 0, 0, null);
-        g2d.drawImage(canvasBuffer, 0, 0, null);
-        new IO(
-                JOptionPane.showInputDialog(this, "Please enter the filename you wanna use (without suffix):") + ".ppm",
-                true
-        ).writeBytes(new PPMParser(mixedBuffer).getRaw());
     }
 
     private class MouseEvents implements MouseListener {
-        Color selColorA, selColorB;
-
         public void mouseClicked(MouseEvent e) {
             int x = e.getX() - 8;
             int y = e.getY() - 31;
             //System.out.println("Clicked x:"+x+", y:"+y);
 
-            if (x > 0 && x < getWidth() && y > 0 && y < 50) {
-                if (x > 4 && x < 96) {
-                    saveImage();
+
+            if (x < 53 && y < 30) {
+                menu1status = false;
+                if (!menu0status) {
+                    clearWidgetOverlay();
+                    drawMenu0();
+                } else {
+                    menu0status = false;
+                    clearWidgetOverlay();
+                    repaint();
                 }
-                if (x > 100 && x < 196) {
-                    clearCanvas();
+            } else if (x > 53 && x < 106 && y < 30) {
+                menu0status = false;
+                if (!menu1status) {
+                    clearWidgetOverlay();
+                    drawMenu1();
+                } else {
+                    menu1status = false;
+                    clearWidgetOverlay();
+                    repaint();
                 }
+            } else {
+                menu0status = menu1status = false;
+                clearWidgetOverlay();
+                repaint();
+            }
+            switch (menu0Selected) {
+                case 0:
+                    System.out.println("read scene");
+                    menu0Selected = -1;
+                    break;
+                case 1:
+                    System.out.println("read mod");
+                    menu0Selected = -1;
+                    break;
+                case 2:
+                    System.out.println("save scene");
+                    menu0Selected = -1;
+                    break;
+                case 3:
+                    System.out.println("save mod");
+                    menu0Selected = -1;
+                    break;
+                case 4:
+                    System.out.println("exit");
+                    menu0Selected = -1;
+                    System.exit(0);
+                    break;
+            }
+            if (menu1Selected == 0) {
+                System.out.println("Open Setting Menu");
+                menu1Selected = -1;
             }
         }
 
         @Override
         public void mousePressed(MouseEvent e) {
-            int x = e.getX() - 8;
-            int y = e.getY() - 31;
+            int x = e.getX();
+            int y = e.getY();
             if (x > 0 && x < getWidth() && y > 50 && y < getHeight()) {
                 orgX = x;
                 orgY = y;
-            }
-            if (x > 0 && x < getWidth() && y > 0 && y < 50) {
-                if (x > getWidth() / 2 - 2 && x < getWidth() / 2 + 34 && y > 10 && y < 40) {
-                    selColorA = Color.RED;
-                    System.out.println("Selected RED");
-                } else if (x > getWidth() / 2 + 38 && x < getWidth() / 2 + 72 && y > 10 && y < 40) {
-                    selColorA = Color.GREEN;
-                    System.out.println("Selected GREEN");
-                } else if (x > getWidth() / 2 + 78 && x < getWidth() / 2 + 112 && y > 10 && y < 40) {
-                    selColorA = Color.BLUE;
-                    System.out.println("Selected BLUE");
-                } else if (x > getWidth() / 2 + 118 && x < getWidth() / 2 + 152 && y > 10 && y < 40) {
-                    selColorA = Color.BLACK;
-                    System.out.println("Selected BLACK");
-                } else if (x > getWidth() / 2 + 158 && x < getWidth() / 2 + 192 && y > 10 && y < 40) {
-                    selColorA = Color.WHITE;
-                    System.out.println("Selected WHITE");
-                } else {
-                    selColorA = null;
-                }
             }
             //draw(e.getX(),e.getY());
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            int x = e.getX() - 8;
-            int y = e.getY() - 31;
-            if (x > 0 && x < getWidth() && y > 0 && y < 50) {
-                if (x > getWidth() / 2 - 2 && x < getWidth() / 2 + 34 && y > 10 && y < 40) {
-                    selColorB = Color.RED;
-                    System.out.println("Selected RED");
-                } else if (x > getWidth() / 2 + 38 && x < getWidth() / 2 + 72 && y > 10 && y < 40) {
-                    selColorB = Color.GREEN;
-                    System.out.println("Selected GREEN");
-                } else if (x > getWidth() / 2 + 78 && x < getWidth() / 2 + 112 && y > 10 && y < 40) {
-                    selColorB = Color.BLUE;
-                    System.out.println("Selected BLUE");
-                } else if (x > getWidth() / 2 + 118 && x < getWidth() / 2 + 152 && y > 10 && y < 40) {
-                    selColorB = Color.BLACK;
-                    System.out.println("Selected BLACK");
-                } else if (x > getWidth() / 2 + 158 && x < getWidth() / 2 + 192 && y > 10 && y < 40) {
-                    selColorB = Color.WHITE;
-                    System.out.println("Selected WHITE");
-                } else {
-                    selColorB = null;
-                }
-                if (selColorA == selColorB && (selColorA != null) && (selColorB != null)) {
-                    color = selColorB;
-                    repaint();
-                }
-            }
+            int x = e.getX();
+            int y = e.getY();
         }
 
         @Override
@@ -254,12 +222,6 @@ public class GUI extends JFrame {
             //System.out.println("dragged x="+e.getX()+", y="+e.getY());
             int x = e.getX() - 8;
             int y = e.getY() - 31;
-            if (x > 0 && x < getWidth() && y > 40 && y < getHeight()) {
-                drawCanvas(x, y, orgX, orgY);
-                drawOverlay(x, y);
-                orgX = x;
-                orgY = y;
-            }
         }
 
         @Override
@@ -267,8 +229,116 @@ public class GUI extends JFrame {
             //System.out.println("moved x="+e.getX()+", y="+e.getY());
             int x = e.getX() - 8;
             int y = e.getY() - 31;
-            if (x > 0 && x < getWidth() && y > 40 && y < getHeight()) {
-                drawOverlay(x, y);
+            //System.out.println("x: "+x+", y: "+y+", menu0sel:"+menu0Selected+", menu1sel:"+menu1Selected);
+            if ((x < 53 && y < 30) || ((x < 142 && y > 28 && y < 138) && menu0status)) {
+                if (menu1status) {
+                    drawMenu1();
+                    menu1Selected = -1;
+                }
+                if (menu0status) {
+                    Graphics2D g2do = widgetOverlay.createGraphics();
+                    g2do.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                    if (y > 28 && y < 50) {
+                        drawMenu0();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(1, 29, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Open Scene", 10, 44);
+                        repaint();
+                        menu0Selected = 0;
+                    } else if (y > 50 && y < 72) {
+                        drawMenu0();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(1, 51, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Open Model", 10, 66);
+                        repaint();
+                        menu0Selected = 1;
+                    } else if (y > 72 && y < 94) {
+                        drawMenu0();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(1, 73, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Save Scene", 10, 88);
+                        repaint();
+                        menu0Selected = 2;
+                    } else if (y > 94 && y < 116) {
+                        drawMenu0();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(1, 95, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Save Model", 10, 110);
+                        repaint();
+                        menu0Selected = 3;
+                    } else if (y > 116 && y < 130) {
+                        drawMenu0();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(1, 117, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Exit", 10, 132);
+                        repaint();
+                        menu0Selected = 4;
+                    } else {
+                        drawMenu0();
+                        menu0Selected = -1;
+                    }
+                } else {
+                    menu0Selected = -1;
+                    if ((x < 53 && y < 30) && !menu1status) {
+                        clearWidgetOverlay();
+                        updateSelect(0, 0, 53, 28, Color.decode("#DADADA"));
+                    } else {
+                        if (!menu1status) {
+                            clearWidgetOverlay();
+                            repaint();
+                        }
+                    }
+                }
+            } else if ((x > 53 && x < 106 && y < 30) || (x > 53 && x < 195 && y > 28 && y < 50)) {
+                if (menu0status) {
+                    drawMenu0();
+                    menu0Selected = -1;
+                }
+                if (menu1status) {
+                    Graphics2D g2do = widgetOverlay.createGraphics();
+                    g2do.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                    if (y > 28) {
+                        drawMenu1();
+                        g2do.setColor(Color.decode("#1A7DC4"));
+                        g2do.fillRect(54, 29, 141, 21);
+                        g2do.setColor(Color.white);
+                        g2do.drawString("Open Setting Menu", 63, 44);
+                        repaint();
+                        menu1Selected = 0;
+                    } else {
+                        drawMenu1();
+                        menu1Selected = -1;
+                    }
+                } else {
+                    menu1Selected = -1;
+                    if ((x < 106 && y < 30) && !menu0status) {
+                        clearWidgetOverlay();
+                        updateSelect(53, 0, 68, 28, Color.decode("#DADADA"));
+                    } else {
+                        if (!menu0status) {
+                            clearWidgetOverlay();
+                            repaint();
+                        }
+                    }
+                }
+            } else {
+                if (menu0status) {
+                    drawMenu0();
+                    menu0Selected = -1;
+                }
+                if (menu1status) {
+                    drawMenu1();
+                    menu1Selected = -1;
+                }
+                if (!(menu0status || menu1status)) {
+                    clearWidgetOverlay();
+                    repaint();
+                }
             }
         }
     }

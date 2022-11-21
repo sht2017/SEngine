@@ -7,8 +7,8 @@ import java.awt.image.WritableRaster;
 import java.util.IllegalFormatFlagsException;
 
 public class PPMParser {
-    private byte[] raw;
-    private BufferedImage bufferedImage;
+    private final byte[] raw;
+    private final BufferedImage bufferedImage;
     private static final byte[] MAGIC_NUM_HEADER = {80, 54};
     private static final byte SPACE = 32;
     private static final byte LINE_BREAKER = 10;
@@ -30,10 +30,10 @@ public class PPMParser {
     }
 
     private BufferedImage parse(byte[] raw) {
-        int width = 0;
-        int height = 0;
-        String tmpWidth = "";
-        String tmpHeight = "";
+        int width;
+        int height;
+        StringBuilder tmpWidth = new StringBuilder();
+        StringBuilder tmpHeight = new StringBuilder();
         int i = 0;
         for (; i < 2; i++) {
             if (raw[i] != MAGIC_NUM_HEADER[i]) {
@@ -51,10 +51,10 @@ public class PPMParser {
                 case 3:
                     break;
                 case 1:
-                    tmpWidth += (char) Byte.toUnsignedInt(raw[i]);
+                    tmpWidth.append((char) Byte.toUnsignedInt(raw[i]));
                     break;
                 case 2:
-                    tmpHeight += (char) Byte.toUnsignedInt(raw[i]);
+                    tmpHeight.append((char) Byte.toUnsignedInt(raw[i]));
                     break;
                 default:
                     i++;
@@ -82,7 +82,7 @@ public class PPMParser {
                     data[offset / 3] |= Byte.toUnsignedInt(raw[i]) << 8;
                     break;
                 case 2:
-                    data[offset / 3] |= Byte.toUnsignedInt(raw[i]) << 0;
+                    data[offset / 3] |= Byte.toUnsignedInt(raw[i]);
                     break;
             }
         }
@@ -137,7 +137,7 @@ public class PPMParser {
                     rawData[i] = (byte) ((data[(i - offset) / 3] & 0xFF00) >>> 8);
                     break;
                 case 2:
-                    rawData[i] = (byte) ((data[(i - offset) / 3] & 0xFF) >>> 0);
+                    rawData[i] = (byte) ((data[(i - offset) / 3] & 0xFF));
                     break;
             }
         }
